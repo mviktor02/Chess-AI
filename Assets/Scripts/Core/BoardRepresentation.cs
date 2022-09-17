@@ -52,7 +52,7 @@
         }
 
         public static string SquareNameFromCoordinate(int fileIndex, int rankIndex) {
-            return FileNames[fileIndex] + "" + (rankIndex + 1);
+            return $"{FileNames[fileIndex]}{rankIndex + 1}";
         }
 
         public static string SquareNameFromIndex(int squareIndex) {

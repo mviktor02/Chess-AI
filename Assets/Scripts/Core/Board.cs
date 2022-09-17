@@ -84,7 +84,7 @@
         public void LoadPosition(string fen)
         {
             InitializeBoard();
-            // ...
+            // TODO
         }
 
     }
