@@ -165,11 +165,19 @@ namespace Chess.Core
         {
             var startIndex = BoardRepresentation.IndexFromCoord(startSquare);
             var targetIndex = BoardRepresentation.IndexFromCoord(targetSquare);
-            bool isMoveLegal;
+            var isMoveLegal = false;
             var chosenMove = new Move();
             var moveGenerator = new MoveGenerator();
-            
-            // TODO
+
+            if (isMoveLegal)
+            {
+                MakeMove(chosenMove);
+                inputState = InputState.None;
+            }
+            else
+            {
+                CancelSelection();
+            }
         }
 
         private void CancelSelection()
