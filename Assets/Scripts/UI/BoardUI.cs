@@ -12,7 +12,6 @@ namespace Chess.UI
         
         public bool whiteIsBottom = true;
 
-        private Coord currentHover = INVALID_COORD;
         private Camera camera;
         private MeshRenderer[,] squareRenderers;
         private SpriteRenderer[,] pieceRenderers;
@@ -20,39 +19,11 @@ namespace Chess.UI
         public const float pieceDepth = -0.1f;
         public const float pieceDragDepth = -0.2f;
         private static readonly Coord INVALID_COORD = new(-1, -1);
-        
+
         private void Awake()
         {
             CreateBoardUI();
             camera = Camera.main;
-        }
-
-        private void Update()
-        {
-            if (!camera) return;
-
-            var ray = camera.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out var info, 100, LayerMask.GetMask("Tile")))
-            {
-                var hitPosition = LookupTileIndex(info.transform.gameObject);
-                currentHover = hitPosition;
-            }
-        }
-
-        private static Coord LookupTileIndex(Object hitInfo)
-        {
-            for (var rank = 0; rank < 8; rank++)
-            {
-                for (var file = 0; file < 8; file++)
-                {
-                    if (hitInfo.name == BoardRepresentation.SquareNameFromCoordinate(file, rank))
-                    {
-                        return new Coord(file, rank);
-                    }
-                }
-            }
-
-            return INVALID_COORD;
         }
 
         public void UpdatePositions(Board board)
@@ -91,7 +62,7 @@ namespace Chess.UI
                     var pieceRenderer = new GameObject("Piece").AddComponent<SpriteRenderer>();
                     pieceRenderer.transform.parent = square.transform;
                     pieceRenderer.transform.position = PositionFromCoord(file, rank, pieceDepth);
-                    pieceRenderer.transform.localScale = Vector3.one * 100 / (2000 / 6f);
+                    pieceRenderer.transform.localScale = Vector3.one * 0.25f;
                     pieceRenderers[file, rank] = pieceRenderer;
                 }
             }
@@ -148,12 +119,6 @@ namespace Chess.UI
         public Vector3 PositionFromCoord(Coord coord, float depth = 0)
         {
             return PositionFromCoord(coord.fileIndex, coord.rankIndex, depth);
-        }
-
-        public bool TryGetSquareUnderMouse(out Coord selectedCoord)
-        {
-            selectedCoord = currentHover;
-            return selectedCoord.fileIndex is >= 0 and < 8 && selectedCoord.rankIndex is >= 0 and < 8;
         }
 
         public void HighlightLegalMoves(Board board, Coord fromSquare)

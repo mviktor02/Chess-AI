@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Chess.Core
 {
@@ -101,6 +102,7 @@ namespace Chess.Core
             for (var index = 0; index < 64; index++)
             {
                 var piece = loadedPosition.squares[index];
+                squares[index] = piece;
 
                 if (piece == Piece.None) continue;
                 

@@ -32,6 +32,7 @@ namespace Chess.Core
         
         public override void Update()
         {
+            // TODO fix: letting go of MB1 after drag doesn't let go of piece
             HandleInput();
         }
 
@@ -92,7 +93,7 @@ namespace Chess.Core
         {
             if (!Input.GetMouseButtonDown(0)) return;
 
-            if (boardUI.TryGetSquareUnderMouse(out selectedSquare))
+            if (TryGetSquareUnderMouse(out selectedSquare))
             {
                 var index = BoardRepresentation.IndexFromCoord(selectedSquare);
                 if (Piece.IsColour(board.squares[index], board.colourToMove))
@@ -106,10 +107,10 @@ namespace Chess.Core
 
         private void HandleDrag(Ray ray)
         {
-            var horizontalPlane = new Plane(Vector3.up, Vector3.up);
+            var horizontalPlane = new Plane(Vector3.forward, Vector3.zero);
             if (horizontalPlane.Raycast(ray, out var distance))
             {
-                boardUI.DragPiece(selectedSquare, ray.GetPoint(distance) + Vector3.up * BoardUI.pieceDragDepth);
+                boardUI.DragPiece(selectedSquare, ray.GetPoint(distance) + Vector3.forward * BoardUI.pieceDragDepth);
             }
             if (Input.GetMouseButtonUp(0))
             {
@@ -125,7 +126,7 @@ namespace Chess.Core
 
         private void HandlePlacement()
         {
-            if (boardUI.TryGetSquareUnderMouse(out var targetSquare))
+            if (TryGetSquareUnderMouse(out var targetSquare))
             {
                 if (targetSquare.Equals(selectedSquare))
                 {
@@ -178,6 +179,12 @@ namespace Chess.Core
             inputState = InputState.None;
             boardUI.DeselectSquare(selectedSquare);
             boardUI.ResetPiecePosition(selectedSquare);
+        }
+        
+        private bool TryGetSquareUnderMouse(out Coord selectedCoord)
+        {
+            selectedCoord = hoveringSquare;
+            return selectedCoord.fileIndex is >= 0 and < 8 && selectedCoord.rankIndex is >= 0 and < 8;
         }
     }
 }
