@@ -40,15 +40,20 @@
         }
 
         public static int IndexFromCoord(Coord coord) {
-            return IndexFromCoord (coord.fileIndex, coord.rankIndex);
+            return IndexFromCoord(coord.fileIndex, coord.rankIndex);
         }
 
         public static Coord CoordFromIndex(int squareIndex) {
-            return new Coord (FileIndex (squareIndex), RankIndex (squareIndex));
+            return new Coord(FileIndex(squareIndex), RankIndex(squareIndex));
         }
 
         public static bool IsLightSquare(int fileIndex, int rankIndex) {
             return (fileIndex + rankIndex) % 2 != 0;
+        }
+
+        public static bool IsLightSquare(int squareIndex)
+        {
+            return IsLightSquare(FileIndex(squareIndex), RankIndex(squareIndex));
         }
 
         public static string SquareNameFromCoordinate(int fileIndex, int rankIndex) {
@@ -56,11 +61,11 @@
         }
 
         public static string SquareNameFromIndex(int squareIndex) {
-            return SquareNameFromCoordinate (CoordFromIndex (squareIndex));
+            return SquareNameFromCoordinate(CoordFromIndex(squareIndex));
         }
 
         public static string SquareNameFromCoordinate(Coord coord) {
-            return SquareNameFromCoordinate (coord.fileIndex, coord.rankIndex);
+            return SquareNameFromCoordinate(coord.fileIndex, coord.rankIndex);
         }
     }
 }

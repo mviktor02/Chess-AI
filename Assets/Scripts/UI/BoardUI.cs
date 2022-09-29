@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Chess.Core;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -16,12 +17,15 @@ namespace Chess.UI
         private MeshRenderer[,] squareRenderers;
         private SpriteRenderer[,] pieceRenderers;
 
+        private Move lastMadeMove;
+        private MoveGenerator moveGenerator;
+
         public const float pieceDepth = -0.1f;
         public const float pieceDragDepth = -0.2f;
-        private static readonly Coord INVALID_COORD = new(-1, -1);
 
         private void Awake()
         {
+            moveGenerator = new MoveGenerator();
             CreateBoardUI();
             camera = Camera.main;
         }
@@ -80,6 +84,15 @@ namespace Chess.UI
                         boardTheme.darkSquares.normal);
                 }
             }
+            
+            if (!lastMadeMove.IsInvalid)
+                HighlightMove(lastMadeMove);
+        }
+
+        private void HighlightMove(Move move)
+        {
+            SetSquareColour(BoardRepresentation.CoordFromIndex(move.StartSquare), boardTheme.lightSquares.moveFromHighlight, boardTheme.darkSquares.moveFromHighlight);
+            SetSquareColour(BoardRepresentation.CoordFromIndex(move.TargetSquare), boardTheme.lightSquares.moveToHighlight, boardTheme.darkSquares.moveToHighlight);
         }
 
         private void SetSquareColour(Coord square, Color lightColour, Color darkColour)
@@ -123,7 +136,72 @@ namespace Chess.UI
 
         public void HighlightLegalMoves(Board board, Coord fromSquare)
         {
-            // TODO
+            var moves = moveGenerator.GenerateMoves(board);
+
+            foreach (var move in moves)
+            {
+                if (move.StartSquare != BoardRepresentation.IndexFromCoord(fromSquare)) continue;
+                
+                var coord = BoardRepresentation.CoordFromIndex(move.TargetSquare);
+                SetSquareColour(coord, boardTheme.lightSquares.legal, boardTheme.darkSquares.legal);
+            }
+        }
+
+        public void OnMoveMade(Board board, Move move, bool animate = false)
+        {
+            lastMadeMove = move;
+            if (animate)
+            {
+                StartCoroutine(AnimateMove(move, board));
+            }
+            else
+            {
+                UpdatePositions(board);
+                ResetSquareColours();
+            }
+        }
+
+        private IEnumerator AnimateMove(Move move, Board board)
+        {
+            float t = 0;
+            const float moveAnimDuration = 0.05f;
+            var startCoord = BoardRepresentation.CoordFromIndex(move.StartSquare);
+            var targetCoord = BoardRepresentation.CoordFromIndex(move.TargetSquare);
+            var pieceTransform = pieceRenderers[startCoord.fileIndex, startCoord.rankIndex].transform;
+            var startPos = PositionFromCoord(startCoord);
+            var targetPos = PositionFromCoord(targetCoord);
+            SetSquareColour(startCoord, boardTheme.lightSquares.moveFromHighlight, boardTheme.darkSquares.moveFromHighlight);
+
+            while (t <= 1)
+            {
+                yield return null;
+                t += Time.deltaTime * 1 / moveAnimDuration;
+                pieceTransform.position = Vector3.Lerp(startPos, targetPos, t);
+            }
+            UpdatePositions(board);
+            ResetSquareColours();
+            pieceTransform.position = startPos;
+        }
+
+        public void SetPerspective(bool isPlayerWhite)
+        {
+            whiteIsBottom = isPlayerWhite;
+            ResetSquarePositions();
+        }
+
+        private void ResetSquarePositions()
+        {
+            for (var rank = 0; rank < 8; rank++)
+            {
+                for (var file = 0; file < 8; file++)
+                {
+                    squareRenderers[file, rank].transform.position = PositionFromCoord(file, rank);
+                    pieceRenderers[file, rank].transform.position = PositionFromCoord(file, rank, pieceDepth);
+                }
+            }
+            
+            if (!lastMadeMove.IsInvalid)
+                HighlightMove(lastMadeMove);
         }
     }
 }

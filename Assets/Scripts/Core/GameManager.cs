@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Chess.UI;
 using UnityEngine;
 
@@ -18,17 +19,20 @@ namespace Chess.Core
         }
         
         private BoardUI boardUI;
-        private Board Board { get; set; }
+        private Board board { get; set; }
 
         private Result gameResult;
         private Player whitePlayer;
         private Player blackPlayer;
         private Player playerToMove;
 
+        private List<Move> moveHistory;
+
         private void Start()
         {
             boardUI = FindObjectOfType<BoardUI>();
-            Board = new Board();
+            board = new Board();
+            moveHistory = new List<Move>();
 
             Debug.Log("Gamemanager Start");
             
@@ -45,8 +49,8 @@ namespace Chess.Core
 
         private void NewGame()
         {
-            Board.LoadStartPosition();
-            boardUI.UpdatePositions(Board);
+            board.LoadStartPosition();
+            boardUI.UpdatePositions(board);
             boardUI.ResetSquareColours();
 
             CreatePlayer(ref whitePlayer);
@@ -60,13 +64,73 @@ namespace Chess.Core
 
         private Result GetGamestate()
         {
-            // TODO
+            var moveGenerator = new MoveGenerator();
+            var moves = moveGenerator.GenerateMoves(board);
+
+            // Mate or Stalemate
+            if (moves.Count == 0)
+            {
+                if (moveGenerator.IsInCheck())
+                {
+                    return board.isWhitesTurn ? Result.WhiteIsMated : Result.BlackIsMated;
+                }
+
+                return Result.Stalemate;
+            }
+            
+            // Fifty move rule
+            if (board.fiftyMoveCounter >= 100)
+            {
+                return Result.FiftyMoveRule;
+            }
+
+            var repetitionCount = 0; // TODO
+            if (repetitionCount == 3)
+            {
+                return Result.Repetition;
+            }
+            
+            // Insufficient material
+            var numOfPawns = board.pawns[Board.WhiteIndex].Count + board.pawns[Board.BlackIndex].Count;
+            var numOfRooks = board.rooks[Board.WhiteIndex].Count + board.rooks[Board.BlackIndex].Count;
+            var numOfQueens = board.queens[Board.WhiteIndex].Count + board.queens[Board.BlackIndex].Count;
+            var numOfKnights = board.knights[Board.WhiteIndex].Count + board.knights[Board.BlackIndex].Count;
+            var numOfBishops = board.bishops[Board.WhiteIndex].Count + board.bishops[Board.BlackIndex].Count;
+
+            if (numOfPawns + numOfRooks + numOfQueens == 0)
+            {
+                if (numOfKnights == 1 || numOfBishops == 1)
+                {
+                    return Result.InsufficientMaterial;
+                }
+                if (board.bishops[Board.WhiteIndex].Count == 1 && board.bishops[Board.BlackIndex].Count == 1)
+                {
+                    var whiteBishopSquare = board.bishops[Board.WhiteIndex][0];
+                    var blackBishopSquare = board.bishops[Board.BlackIndex][0];
+                    if (BoardRepresentation.IsLightSquare(whiteBishopSquare) ==
+                        BoardRepresentation.IsLightSquare(blackBishopSquare))
+                    {
+                        return Result.InsufficientMaterial;
+                    }
+                }
+                if (numOfKnights + numOfBishops == 0)
+                {
+                    return Result.InsufficientMaterial;
+                }
+            }
+            
             return Result.Playing;
         }
 
-        private void OnMoveChosen(Move obj)
+        private void OnMoveChosen(Move move)
         {
-            // TODO
+            var animateMove = playerToMove is ArtificialPlayer;
+            board.MakeMove(move);
+
+            moveHistory.Add(move);
+            boardUI.OnMoveMade(board, move, animateMove);
+            
+            NotifyPlayerToMove();
         }
 
         private void NotifyPlayerToMove()
@@ -75,7 +139,7 @@ namespace Chess.Core
             PrintGameResult(gameResult);
 
             if (gameResult == Result.Playing) {
-                playerToMove = (Board.isWhitesTurn) ? whitePlayer : blackPlayer;
+                playerToMove = (board.isWhitesTurn) ? whitePlayer : blackPlayer;
                 playerToMove.NotifyTurnToMove ();
 
             } else {
@@ -114,6 +178,7 @@ namespace Chess.Core
                 default:
                     throw new ArgumentOutOfRangeException(nameof(result), result, null);
             }
+            // TODO show message on screen
             Debug.Log(text);
         }
 
@@ -124,7 +189,7 @@ namespace Chess.Core
                 player.onMoveEvent -= OnMoveChosen;
             }
 
-            player = new HumanPlayer(Board);
+            player = new HumanPlayer(board);
             player.onMoveEvent += OnMoveChosen;
         }
     }

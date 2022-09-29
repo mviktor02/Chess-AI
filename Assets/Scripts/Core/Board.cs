@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Chess.Core
 {
-    // TODO
+    // TODO zobrist hashing, repetition, MakeMove and UnmakeMove
     public class Board
     {
         public const int WhiteIndex = 0;
@@ -46,12 +46,12 @@ namespace Chess.Core
 
         public void MakeMove(Move move)
         {
-            
+            // TODO MakeMove
         }
 
         public void UnmakeMove(Move move)
         {
-            
+            // TODO UnmakeMove
         }
 
         private void InitializeBoard()
