@@ -13,7 +13,7 @@ namespace Chess.UI
         
         public bool whiteIsBottom = true;
 
-        private Camera camera;
+        private Camera _camera;
         private MeshRenderer[,] squareRenderers;
         private SpriteRenderer[,] pieceRenderers;
 
@@ -27,7 +27,7 @@ namespace Chess.UI
         {
             moveGenerator = new MoveGenerator();
             CreateBoardUI();
-            camera = Camera.main;
+            _camera = Camera.main;
         }
 
         public void UpdatePositions(Board board)

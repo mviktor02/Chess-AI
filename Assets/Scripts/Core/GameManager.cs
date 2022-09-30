@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Chess.UI;
 using UnityEngine;
 
@@ -43,7 +44,7 @@ namespace Chess.Core
         {
             if (gameResult == Result.Playing)
             {
-                playerToMove.Update();
+                playerToMove?.Update();
             }
         }
 
@@ -84,7 +85,7 @@ namespace Chess.Core
                 return Result.FiftyMoveRule;
             }
 
-            var repetitionCount = 0; // TODO
+            var repetitionCount = board.repetitionPosHistory.Count(x => x == board.zobristKey);
             if (repetitionCount == 3)
             {
                 return Result.Repetition;

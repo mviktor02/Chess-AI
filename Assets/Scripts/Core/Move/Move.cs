@@ -60,7 +60,7 @@
             }
         }
 
-        public static Move InvalidMove => new Move (0);
+        public static Move InvalidMove => new Move(0);
 
         public static bool IsSameMove(Move a, Move b) {
             return a.moveValue == b.moveValue;

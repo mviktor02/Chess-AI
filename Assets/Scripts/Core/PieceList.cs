@@ -35,7 +35,7 @@
 
         public void MovePiece(int startSquare, int targetSquare)
         {
-            int pieceIndex = map[startSquare];
+            var pieceIndex = map[startSquare];
             occupiedSquares[pieceIndex] = targetSquare;
             map[targetSquare] = pieceIndex;
         }

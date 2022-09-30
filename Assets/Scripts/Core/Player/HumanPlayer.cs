@@ -32,7 +32,6 @@ namespace Chess.Core
         
         public override void Update()
         {
-            // TODO fix: letting go of MB1 after drag doesn't let go of piece
             HandleInput();
         }
 
@@ -168,6 +167,17 @@ namespace Chess.Core
             var isMoveLegal = false;
             var chosenMove = new Move();
             var moveGenerator = new MoveGenerator();
+
+            var legalMoves = moveGenerator.GenerateMoves(board);
+            foreach (var move in legalMoves)
+            {
+                if (move.StartSquare != startIndex || move.TargetSquare != targetIndex)
+                    continue;
+                
+                isMoveLegal = true;
+                chosenMove = move;
+                break;
+            }
 
             if (isMoveLegal)
             {

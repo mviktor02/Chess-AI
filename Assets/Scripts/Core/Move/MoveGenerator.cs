@@ -41,7 +41,7 @@ namespace Chess.Core
             opponentColour = board.opponentColour;
             friendlyColourIndex = board.colourToMoveIndex;
             opponentColourIndex = 1 - friendlyColourIndex;
-            friendlyKingSquare = board.kingSquareIndexes[friendlyColourIndex];
+            friendlyKingSquare = board.kingSquares[friendlyColourIndex];
         }
 
         /// <summary>
@@ -517,7 +517,7 @@ namespace Chess.Core
                 checkRayBitmask |= 1ul << pawnSquare;
             }
 
-            var enemyKingSquare = board.kingSquareIndexes[opponentColourIndex];
+            var enemyKingSquare = board.kingSquares[opponentColourIndex];
 
             opponentAttackMapNoPawns =
                 opponentSlidingAttackMap | opponentKnightAttackMap | kingAttackBitboards[enemyKingSquare];

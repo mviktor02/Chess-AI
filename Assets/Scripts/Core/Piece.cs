@@ -18,27 +18,27 @@ namespace Chess.Core
         private const int whiteMask = 0b01000;
         private const int colourMask = whiteMask | blackMask;
 
-        public static bool IsColour (int piece, int colour) {
+        public static bool IsColour(int piece, int colour) {
             return (piece & colourMask) == colour;
         }
 
-        public static int GetColour (int piece) {
+        public static int GetColour(int piece) {
             return piece & colourMask;
         }
 
-        public static int GetPieceType (int piece) {
+        public static int GetPieceType(int piece) {
             return piece & typeMask;
         }
 
-        public static bool IsRookOrQueen (int piece) {
+        public static bool IsRookOrQueen(int piece) {
             return (piece & 0b110) == 0b110;
         }
 
-        public static bool IsBishopOrQueen (int piece) {
+        public static bool IsBishopOrQueen(int piece) {
             return (piece & 0b101) == 0b101;
         }
 
-        public static bool IsSlidingPiece (int piece) {
+        public static bool IsSlidingPiece(int piece) {
             return (piece & 0b100) != 0;
         }
     }
