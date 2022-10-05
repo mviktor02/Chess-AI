@@ -237,7 +237,7 @@ namespace Chess.Core
                     if (!generateQuietMoves && !isCapture) continue;
                     
                     // Skip if square contains a friendly piece or if we're in check and the move wouldn't prevent it
-                    if (Piece.IsColour(targetSquarePiece, opponentColour) || (isInCheck && !IsSquareInCheckRay(targetSquare)))
+                    if (Piece.IsColour(targetSquarePiece, friendlyColour) || (isInCheck && !IsSquareInCheckRay(targetSquare)))
                         continue;
                         
                     moves.Add(new Move(startSquare, targetSquare));
