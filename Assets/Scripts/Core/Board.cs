@@ -3,7 +3,6 @@
 namespace Chess.Core
 {
     // TODO UnmakeMove
-    // TODO capturing with knights is bugged
     public class Board
     {
         public const int WhiteIndex = 0;
