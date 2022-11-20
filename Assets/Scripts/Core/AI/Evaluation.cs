@@ -9,6 +9,10 @@
         public const int rookValue = 500;
         public const int queenValue = 900;
 
+        /// <summary>
+        /// Evaluates the current board position, only looking at material score.
+        /// </summary>
+        /// <returns>The current material score from the perspective of the current player's colour</returns>
         public static int EvaluateMaterialOnly(in Board board)
         {
             int whiteEval = 0;

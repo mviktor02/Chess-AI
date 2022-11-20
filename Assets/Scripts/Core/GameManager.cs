@@ -85,6 +85,7 @@ namespace Chess.Core
                 return Result.FiftyMoveRule;
             }
 
+            // Repetition
             var repetitionCount = board.repetitionPosHistory.Count(x => x == board.zobristKey);
             if (repetitionCount == 3)
             {
