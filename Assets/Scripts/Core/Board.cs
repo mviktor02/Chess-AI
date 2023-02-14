@@ -16,7 +16,7 @@ namespace Chess.Core
         public int colourToMoveIndex;
         public int opponentColour;
 
-        public int plyCounter;
+        public int plyCount;
         public int fiftyMoveCounter;
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace Chess.Core
             colourToMove = isWhitesTurn ? Piece.White : Piece.Black;
             opponentColour = isWhitesTurn ? Piece.Black : Piece.White;
             colourToMoveIndex = 1 - colourToMoveIndex;
-            plyCounter++;
+            plyCount++;
             fiftyMoveCounter++;
 
             if (recordGameHistory)
@@ -341,7 +341,7 @@ namespace Chess.Core
                 zobristKey ^= Zobrist.castlingRights[newCastleState];
             }
 
-            plyCounter--;
+            plyCount--;
 
             if (recordGameHistory && repetitionPosHistory.Count > 0)
             {
@@ -357,7 +357,7 @@ namespace Chess.Core
             gameStateHistory = new Stack<uint>();
             zobristKey = 0;
             repetitionPosHistory = new Stack<ulong>();
-            plyCounter = 0;
+            plyCount = 0;
             fiftyMoveCounter = 0;
 
             knights = new PieceList[] { new(10), new(10) };
@@ -435,9 +435,9 @@ namespace Chess.Core
             var initialGameState = (ushort) (whiteCastle | blackCastle | epState);
             gameStateHistory.Push(initialGameState);
             currentGameState = initialGameState;
-            plyCounter = loadedPosition.plyCount;
+            plyCount = loadedPosition.plyCount;
 
-            plyCounter = loadedPosition.plyCount;
+            plyCount = loadedPosition.plyCount;
 
             zobristKey = Zobrist.CalculateZobristKey(this);
         }

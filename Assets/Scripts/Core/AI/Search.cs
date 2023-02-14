@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using UnityEngine;
 
 namespace Chess.Core.AI
 {
@@ -21,7 +22,10 @@ namespace Chess.Core.AI
     /// </summary>
     public class Search
     {
+        const int transpositionTableSize = 64000;
         private const int immediateMateScore = 100000;
+        const int positiveInfinity = 9999999;
+        const int negativeInfinity = -positiveInfinity;
         
         public event Action<Move> onSearchComplete;
 
@@ -34,30 +38,83 @@ namespace Chess.Core.AI
         private Board board;
         private MoveGenerator moveGenerator;
         private MoveOrderer moveOrderer;
+        private TranspositionTable transpositionTable;
+        AISettings settings;
+        
+        private int numNodes;
+        private int numQNodes;
+        private int numCutoffs;
+        private int numTranspositions;
+        public SearchDiagnostics searchDiagnostics;
+        private System.Diagnostics.Stopwatch searchStopwatch;
 
-        private Func<Board, int> evaluate;
-
-        public Search(ref Board searchBoard, Func<Board, int> evaluationFunc, int maxSearchDepth = 8)
+        public Search(ref Board searchBoard, AISettings aiSettings, int maxSearchDepth = 8)
         {
             board = searchBoard;
-            evaluate = evaluationFunc;
             this.maxSearchDepth = maxSearchDepth;
-            
+            this.settings = aiSettings;
+
+            transpositionTable = new TranspositionTable(board, transpositionTableSize);
             moveGenerator = new MoveGenerator();
+            moveOrderer = new MoveOrderer(moveGenerator, transpositionTable);
         }
 
         public void StartSearch()
         {
+            InitDebugInfo();
             bestEvalThisIteration = bestEval = 0;
             bestMoveThisIteration = bestMove = Move.InvalidMove;
-
+            transpositionTable.enabled = settings.useTranspositionTable;
+            
+            // Clearing the transposition table before each search seems to help
+            // This makes no sense to me, I presume there is a bug somewhere but haven't been able to track it down yet
+            if (settings.clearTTEachMove) {
+                transpositionTable.Clear();
+            }
+            
             currentSearchDepth = 0;
 
-            SearchMoves(maxSearchDepth, 0);
-            bestMove = bestMoveThisIteration;
-            bestEval = bestEvalThisIteration;
+            abortSearch = false;
+            searchDiagnostics = new SearchDiagnostics();
             
+            // Iterative deepening. This means doing a full search with a depth of 1, then with a depth of 2, and so on.
+            // This allows the search to be aborted at any time, while still yielding a useful result from the last search.
+            if (settings.useIterativeDeepening)
+            {
+                int targetDepth = (settings.useFixedDepthSearch) ? settings.depth : int.MaxValue;
+
+                for (int searchDepth = 1; searchDepth <= targetDepth; searchDepth++) {
+                    SearchMoves (searchDepth, 0);
+                    if (abortSearch) {
+                        break;
+                    }
+
+                    currentSearchDepth = searchDepth;
+                    bestMove = bestMoveThisIteration;
+                    bestEval = bestEvalThisIteration;
+
+                    // Update diagnostics
+                    searchDiagnostics.lastCompletedDepth = searchDepth;
+                    searchDiagnostics.move = bestMove.Name;
+                    searchDiagnostics.eval = bestEval;
+                    searchDiagnostics.moveVal = PGN.NotationFromMove(FenUtility.FenFromPosition(board), bestMove);
+
+                    // Exit search if found a mate
+                    if (IsMateScore (bestEval) && !settings.endlessSearchMode) {
+                        break;
+                    }
+                }
+            } else {
+                SearchMoves (settings.depth, 0);
+                bestMove = bestMoveThisIteration;
+                bestEval = bestEvalThisIteration;
+            }
+
             onSearchComplete?.Invoke(bestMove);
+            
+            if (!settings.useThreading) {
+                LogDebugInfo();
+            }
         }
 
         public void Abort()
@@ -65,7 +122,7 @@ namespace Chess.Core.AI
             abortSearch = true;
         }
 
-        private int SearchMoves(int depth, int plyFromRoot, int alpha = int.MinValue, int beta = int.MaxValue)
+        private int SearchMoves(int depth, int plyFromRoot, int alpha = negativeInfinity, int beta = positiveInfinity)
         {
             if (abortSearch)
                 return 0;
@@ -84,9 +141,28 @@ namespace Chess.Core.AI
                 if (alpha >= beta)
                     return alpha;
             }
+            
+            // Try looking up the current position in the transposition table.
+            // If the same position has already been searched to at least an equal depth
+            // to the search we're doing now, we can just use the recorded evaluation.
+            int ttVal = transpositionTable.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+            if (ttVal != TranspositionTable.lookupFailed) {
+                numTranspositions++;
+                if (plyFromRoot == 0) {
+                    bestMoveThisIteration = transpositionTable.GetStoredMove();
+                    bestEvalThisIteration = transpositionTable.entries[transpositionTable.Index].value;
+                    //Debug.Log ("move retrieved " + bestMoveThisIteration.Name + " Node type: " + tt.entries[tt.Index].nodeType + " depth: " + tt.entries[tt.Index].depth);
+                }
+                return ttVal;
+            }
+            
+            if (depth == 0) {
+                int evaluation = QuiescenceSearch(alpha, beta);
+                return evaluation;
+            }
 
             var moves = moveGenerator.GenerateMoves(board);
-            moveOrderer.OrderMoves(board, moves);
+            moveOrderer.OrderMoves(board, moves, settings.useTranspositionTable);
             if (moves.Count == 0)
             {
                 if (moveGenerator.IsInCheck())
@@ -95,21 +171,28 @@ namespace Chess.Core.AI
             }
 
             var bestMoveInThisPosition = Move.InvalidMove;
+            var evalType = TranspositionTable.UpperBound;
 
             foreach (var move in moves)
             {
-                board.MakeMove(move);
+                board.MakeMove(move, recordGameHistory : false);
                 var eval = -SearchMoves(depth - 1, plyFromRoot + 1, -beta, -alpha);
-                board.UnmakeMove(move);
+                board.UnmakeMove(move, recordGameHistory : false);
+                numNodes++;
 
                 // If a move is considered too good, the opponent probably won't allow us to reach this position by
                 // choosing a different move earlier on, so we should skip the remaining moves...
                 if (eval >= beta)
+                {
+                    transpositionTable.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, move);
+                    numCutoffs++;
                     return beta;
-                
+                }
+
                 // Found a new best move in this position
                 if (eval > alpha)
                 {
+                    evalType = TranspositionTable.Exact;
                     bestMoveInThisPosition = move;
 
                     alpha = eval;
@@ -120,8 +203,92 @@ namespace Chess.Core.AI
                     }
                 }
             }
+            
+            transpositionTable.StoreEvaluation(depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
 
             return alpha;
+        }
+        
+        // Search capture moves until a 'quiet' position is reached.
+        int QuiescenceSearch(int alpha, int beta) {
+            // A player isn't forced to make a capture (typically), so see what the evaluation is without capturing anything.
+            // This prevents situations where a player ony has bad captures available from being evaluated as bad,
+            // when the player might have good non-capture moves available.
+            int eval = Evaluation.Evaluate(board);
+            searchDiagnostics.numPositionsEvaluated++;
+            if (eval >= beta) {
+                return beta;
+            }
+            if (eval > alpha) {
+                alpha = eval;
+            }
+
+            var moves = moveGenerator.GenerateMoves (board, false);
+            moveOrderer.OrderMoves(board, moves, false);
+            foreach (var move in moves)
+            {
+                board.MakeMove (move, false);
+                eval = -QuiescenceSearch(-beta, -alpha);
+                board.UnmakeMove (move, false);
+                numQNodes++;
+
+                if (eval >= beta) {
+                    numCutoffs++;
+                    return beta;
+                }
+                if (eval > alpha) {
+                    alpha = eval;
+                }
+            }
+
+            return alpha;
+        }
+        
+        public static bool IsMateScore(int score) {
+            const int maxMateDepth = 1000;
+            return Math.Abs(score) > immediateMateScore - maxMateDepth;
+        }
+
+        public static int NumPlyToMateFromScore(int score) {
+            return immediateMateScore - Math.Abs(score);
+        }
+        
+        void AnnounceMate() {
+
+            if (IsMateScore (bestEvalThisIteration)) {
+                int numPlyToMate = NumPlyToMateFromScore (bestEvalThisIteration);
+                //int numPlyToMateAfterThisMove = numPlyToMate - 1;
+
+                int numMovesToMate = (int) Math.Ceiling(numPlyToMate / 2f);
+
+                string sideWithMate = (bestEvalThisIteration * (board.isWhitesTurn ? 1 : -1) < 0) ? "Black" : "White";
+
+                Debug.Log ($"{sideWithMate} can mate in {numMovesToMate} move{(numMovesToMate>1 ? "s" : "")}");
+            }
+        }
+        
+        void LogDebugInfo () {
+            AnnounceMate ();
+            Debug.Log ($"Best move: {bestMoveThisIteration.Name} Eval: {bestEvalThisIteration} Search time: {searchStopwatch.ElapsedMilliseconds} ms.");
+            Debug.Log ($"Num nodes: {numNodes} num Qnodes: {numQNodes} num cutoffs: {numCutoffs} num TThits {numTranspositions}");
+        }
+        
+        void InitDebugInfo() {
+            searchStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            numNodes = 0;
+            numQNodes = 0;
+            numCutoffs = 0;
+            numTranspositions = 0;
+        }
+        
+        [Serializable]
+        public class SearchDiagnostics {
+            public int lastCompletedDepth;
+            public string moveVal;
+            public string move;
+            public int eval;
+            public bool isBook;
+            public int numPositionsEvaluated;
         }
         
     }

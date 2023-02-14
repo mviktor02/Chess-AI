@@ -2,12 +2,17 @@
 {
     public class Evaluation
     {
-        
+
         public const int pawnValue = 100;
         public const int knightValue = 300;
         public const int bishopValue = 320;
         public const int rookValue = 500;
         public const int queenValue = 900;
+
+        public static int Evaluate(in Board board)
+        {
+            return EvaluateMaterialOnly(board);
+        }
 
         /// <summary>
         /// Evaluates the current board position, only looking at material score.

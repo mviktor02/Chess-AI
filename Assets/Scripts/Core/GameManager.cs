@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chess.Core.AI;
 using Chess.UI;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace Chess.Core
         
         private BoardUI boardUI;
         private Board board { get; set; }
+        public AISettings aiSettings;
 
         private Result gameResult;
         private Player whitePlayer;
@@ -34,10 +36,10 @@ namespace Chess.Core
             boardUI = FindObjectOfType<BoardUI>();
             board = new Board();
             moveHistory = new List<Move>();
-
-            Debug.Log("Gamemanager Start");
+            aiSettings.diagnostics = new Search.SearchDiagnostics();
             
-            NewGame();
+            // TODO expose these as settings
+            NewGame(PlayerType.Human, PlayerType.AI);
         }
 
         private void Update()
@@ -48,14 +50,15 @@ namespace Chess.Core
             }
         }
 
-        private void NewGame()
+        private void NewGame(PlayerType whitePlayerType, PlayerType blackPlayerType)
         {
+            moveHistory.Clear();
             board.LoadStartPosition();
             boardUI.UpdatePositions(board);
             boardUI.ResetSquareColours();
 
-            CreatePlayer(ref whitePlayer);
-            CreatePlayer(ref blackPlayer);
+            CreatePlayer(ref whitePlayer, whitePlayerType);
+            CreatePlayer(ref blackPlayer, blackPlayerType);
 
             gameResult = Result.Playing;
             PrintGameResult(gameResult);
@@ -183,16 +186,35 @@ namespace Chess.Core
             // TODO show message on screen
             Debug.Log(text);
         }
+        
+        public void ExportGame () {
+            string pgn = PGN.CreatePGN (moveHistory.ToArray ());
+            string baseUrl = "https://www.lichess.org/paste?pgn=";
+            string escapedPGN = UnityEngine.Networking.UnityWebRequest.EscapeURL (pgn);
+            string url = baseUrl + escapedPGN;
 
-        private void CreatePlayer(ref Player player)
+            Application.OpenURL (url);
+            TextEditor t = new TextEditor ();
+            t.text = pgn;
+            t.SelectAll ();
+            t.Copy ();
+        }
+
+        private void CreatePlayer(ref Player player, PlayerType playerType)
         {
             if (player != null)
             {
                 player.onMoveEvent -= OnMoveChosen;
             }
 
-            player = new HumanPlayer(board);
+            if (playerType == PlayerType.Human) {
+                player = new HumanPlayer (board);
+            } else {
+                player = new ArtificialPlayer(board, aiSettings);
+            }
             player.onMoveEvent += OnMoveChosen;
         }
+        
+        public enum PlayerType { Human, AI }
     }
 }

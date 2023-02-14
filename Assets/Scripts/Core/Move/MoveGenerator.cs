@@ -19,11 +19,11 @@ namespace Chess.Core
         private bool doPinsExist;
         private ulong checkRayBitmask;
         private ulong pinRayBitmask;
-        private ulong opponentKnightAttackMap;
-        private ulong opponentAttackMapNoPawns;
-        private ulong opponentAttackMap;
-        private ulong opponentPawnAttackMap;
-        private ulong opponentSlidingAttackMap;
+        public ulong opponentKnightAttackMap;
+        public ulong opponentAttackMapNoPawns;
+        public ulong opponentAttackMap;
+        public ulong opponentPawnAttackMap;
+        public ulong opponentSlidingAttackMap;
 
         private bool generateQuietMoves;
         private Board board;
