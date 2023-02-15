@@ -15,18 +15,19 @@ MonoBehaviour:
   depth: 5
   useIterativeDeepening: 1
   useTranspositionTable: 1
-  useThreading: 0
+  useThreading: 1
   useFixedDepthSearch: 0
   searchTimeMillis: 1000
   endlessSearchMode: 0
   clearTTEachMove: 0
+  evaluationType: 0
   useBook: 0
   book: {fileID: 0}
   maxBookPly: 10
   diagnostics:
-    lastCompletedDepth: 0
-    moveVal: 
-    move: 
-    eval: 0
+    lastCompletedDepth: 7
+    moveVal: Ke6
+    move: e8-e7
+    eval: 2540
     isBook: 0
-    numPositionsEvaluated: 0
+    numPositionsEvaluated: 588959

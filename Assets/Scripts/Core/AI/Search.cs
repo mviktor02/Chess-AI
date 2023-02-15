@@ -82,9 +82,12 @@ namespace Chess.Core.AI
             if (settings.useIterativeDeepening)
             {
                 int targetDepth = (settings.useFixedDepthSearch) ? settings.depth : int.MaxValue;
-
+                const int fourthPawnValue = Evaluation.pawnValue / 4;
+                int alpha = negativeInfinity;
+                int beta = positiveInfinity;
                 for (int searchDepth = 1; searchDepth <= targetDepth; searchDepth++) {
-                    SearchMoves (searchDepth, 0);
+                    SearchMoves (searchDepth, 0, alpha, beta);
+                    
                     if (abortSearch) {
                         break;
                     }
@@ -92,6 +95,9 @@ namespace Chess.Core.AI
                     currentSearchDepth = searchDepth;
                     bestMove = bestMoveThisIteration;
                     bestEval = bestEvalThisIteration;
+                    
+                    alpha = bestEvalThisIteration - (bestEvalThisIteration < alpha ? 4 : 1) * fourthPawnValue;
+                    beta = bestEvalThisIteration + (bestEvalThisIteration > beta ? 4 : 1) * fourthPawnValue;
 
                     // Update diagnostics
                     searchDiagnostics.lastCompletedDepth = searchDepth;
