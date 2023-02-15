@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Chess.Core
 {
@@ -230,123 +231,121 @@ namespace Chess.Core
 
         public void UnmakeMove(Move move, bool recordGameHistory = true)
         {
-            var opponentColourIndex = colourToMoveIndex;
-            var isWhiteUndo = opponentColour == Piece.White;
-            colourToMove = opponentColour;
-            opponentColour = isWhiteUndo ? Piece.Black : Piece.White;
-            colourToMoveIndex = 1 - colourToMoveIndex;
-            isWhitesTurn = !isWhitesTurn;
+			var opponentColourIndex = colourToMoveIndex;
+			var isWhiteUndo = opponentColour == Piece.White;
+			colourToMove = opponentColour;
+			opponentColour = isWhiteUndo ? Piece.Black : Piece.White;
+			colourToMoveIndex = 1 - colourToMoveIndex;
+			isWhitesTurn = !isWhitesTurn;
 
-            var originalCastleState = currentGameState & 0b1111;
+			var originalCastleState = currentGameState & 0b1111;
 
-            var capturedPieceType = ((int)currentGameState >> 8) & 63;
-            var capturedPiece = capturedPieceType == 0 ? 0 : capturedPieceType | opponentColour;
+			var capturedPieceType = ((int)currentGameState >> 8) & 63;
+			var capturedPiece = capturedPieceType == 0 ? 0 : capturedPieceType | opponentColour;
 
-            var movedFrom = move.StartSquare;
-            var movedTo = move.TargetSquare;
-            var moveFlag = move.MoveFlag;
-            var isEnPassant = moveFlag == Move.Flag.EnPassant;
-            var isPromotion = move.IsPromotion;
+			var movedFrom = move.StartSquare;
+			var movedTo = move.TargetSquare;
+			var moveFlag = move.MoveFlag;
+			var isEnPassant = moveFlag == Move.Flag.EnPassant;
+			var isPromotion = move.IsPromotion;
 
-            var toSquarePieceType = Piece.GetPieceType(squares[movedTo]);
-            var movedPieceType = isPromotion ? Piece.Pawn : toSquarePieceType;
+			var toSquarePieceType = Piece.GetPieceType(squares[movedTo]);
+			var movedPieceType = isPromotion ? Piece.Pawn : toSquarePieceType;
 
-            zobristKey ^= Zobrist.sideToMove;
-            // add piece back to square it moved from
-            zobristKey ^= Zobrist.pieces[movedPieceType, colourToMoveIndex, movedFrom];
-            // remove piece from square it moved to
-            zobristKey ^= Zobrist.pieces[toSquarePieceType, colourToMoveIndex, movedTo];
+			zobristKey ^= Zobrist.sideToMove;
+			// add piece back to square it moved from
+			zobristKey ^= Zobrist.pieces[movedPieceType, colourToMoveIndex, movedFrom];
+			// remove piece from square it moved to
+			zobristKey ^= Zobrist.pieces[toSquarePieceType, colourToMoveIndex, movedTo];
 
-            var oldEnPassantFile = (currentGameState >> 4) & 15;
-            if (oldEnPassantFile != 0)
-                zobristKey ^= Zobrist.enPassantFile[oldEnPassantFile];
+			var oldEnPassantFile = (currentGameState >> 4) & 15;
+			if (oldEnPassantFile != 0)
+				zobristKey ^= Zobrist.enPassantFile[oldEnPassantFile];
 
-            // en passant captures are handled later
-            if (capturedPieceType != 0 && !isEnPassant)
-            {
-                zobristKey ^= Zobrist.pieces[capturedPieceType, opponentColourIndex, movedTo];
-                GetPieceList(capturedPieceType, opponentColourIndex).AddPieceAtSquare(movedTo);
-            }
+			// en passant captures are handled later
+			if (capturedPieceType != 0 && !isEnPassant)
+			{
+				zobristKey ^= Zobrist.pieces[capturedPieceType, opponentColourIndex, movedTo];
+				GetPieceList(capturedPieceType, opponentColourIndex).AddPieceAtSquare(movedTo);
+			}
 
-            if (movedPieceType == Piece.King)
-            {
-                kingSquares[colourToMoveIndex] = movedFrom;
-            }
-            else
-            {
-                GetPieceList(movedPieceType, colourToMoveIndex).MovePiece(movedTo, movedFrom);
-            }
+			if (movedPieceType == Piece.King)
+			{
+				kingSquares[colourToMoveIndex] = movedFrom;
+			} else if (!isPromotion) {
+				GetPieceList(movedPieceType, colourToMoveIndex).MovePiece(movedTo, movedFrom);
+			}
 
-            // if the move was a promotion, this will put the promoted piece back to the original position
-            // instead of the pawn...
-            // this is handled in the special move checks below
-            squares[movedFrom] = movedPieceType | colourToMove;
-            squares[movedTo] = capturedPiece;
+			// if the move was a promotion, this will put the promoted piece back to the original position
+			// instead of the pawn...
+			// this is handled in the special move checks below
+			squares[movedFrom] = movedPieceType | colourToMove;
+			squares[movedTo] = capturedPiece; // will be 0 if no piece was captured
 
-            if (isPromotion)
-            {
-                pawns[colourToMoveIndex].AddPieceAtSquare(movedFrom);
-                switch (moveFlag)
-                {
-                    case Move.Flag.PromoteToQueen:
-                        queens[colourToMoveIndex].RemovePieceFromSquare(movedTo);
-                        break;
-                    case Move.Flag.PromoteToKnight:
-                        knights[colourToMoveIndex].RemovePieceFromSquare(movedTo);
-                        break;
-                    case Move.Flag.PromoteToRook:
-                        rooks[colourToMoveIndex].RemovePieceFromSquare(movedTo);
-                        break;
-                    case Move.Flag.PromoteToBishop:
-                        bishops[colourToMoveIndex].RemovePieceFromSquare(movedTo);
-                        break;
-                }
-            }
-            // put captured pawn back on the right square
-            else if (isEnPassant)
-            {
-                var enPassantIndex = movedTo + (colourToMove == Piece.White ? -8 : 8);
-                squares[movedTo] = 0;
-                squares[enPassantIndex] = capturedPiece;
-                pawns[opponentColourIndex].AddPieceAtSquare(enPassantIndex);
-                zobristKey ^= Zobrist.pieces[Piece.Pawn, opponentColourIndex, enPassantIndex];
-            }
-            // put castled rook back to starting square
-            else if (moveFlag == Move.Flag.Castling)
-            {
-                var kingside = movedTo is BoardRepresentation.g1 or BoardRepresentation.g8;
-                var castlingRookFromIndex = kingside ? movedTo + 1 : movedTo - 2;
-                var castlingRookToIndex = kingside ? movedTo - 1 : movedTo + 1;
+			if (isPromotion)
+			{
+				pawns[colourToMoveIndex].AddPieceAtSquare(movedFrom);
+				switch (moveFlag)
+				{
+					case Move.Flag.PromoteToQueen:
+						queens[colourToMoveIndex].RemovePieceFromSquare(movedTo);
+						break;
+					case Move.Flag.PromoteToKnight:
+						knights[colourToMoveIndex].RemovePieceFromSquare(movedTo);
+						break;
+					case Move.Flag.PromoteToRook:
+						rooks[colourToMoveIndex].RemovePieceFromSquare(movedTo);
+						break;
+					case Move.Flag.PromoteToBishop:
+						bishops[colourToMoveIndex].RemovePieceFromSquare(movedTo);
+						break;
+				}
+			}
+			// put captured pawn back on the right square
+			else if (isEnPassant)
+			{
+				var enPassantIndex = movedTo + (colourToMove == Piece.White ? -8 : 8);
+				squares[movedTo] = 0;
+				squares[enPassantIndex] = capturedPiece;
+				pawns[opponentColourIndex].AddPieceAtSquare(enPassantIndex);
+				zobristKey ^= Zobrist.pieces[Piece.Pawn, opponentColourIndex, enPassantIndex];
+			}
+			// put castled rook back to starting square
+			else if (moveFlag == Move.Flag.Castling)
+			{
+				var kingside = movedTo is BoardRepresentation.g1 or BoardRepresentation.g8;
+				var castlingRookFromIndex = kingside ? movedTo + 1 : movedTo - 2;
+				var castlingRookToIndex = kingside ? movedTo - 1 : movedTo + 1;
 
-                squares[castlingRookToIndex] = 0;
-                squares[castlingRookFromIndex] = Piece.Rook | colourToMove;
-                
-                rooks[colourToMoveIndex].MovePiece(castlingRookToIndex, castlingRookFromIndex);
-                zobristKey ^= Zobrist.pieces[Piece.Rook, colourToMoveIndex, castlingRookFromIndex];
-                zobristKey ^= Zobrist.pieces[Piece.Rook, colourToMoveIndex, castlingRookToIndex];
-            }
+				squares[castlingRookToIndex] = 0;
+				squares[castlingRookFromIndex] = Piece.Rook | colourToMove;
 
-            gameStateHistory.Pop();
-            currentGameState = gameStateHistory.Peek();
-            
-            fiftyMoveCounter = (int) (currentGameState & 4294950912) >> 14;
-            var newEnPassantFile = (int)(currentGameState >> 4) & 15;
-            if (newEnPassantFile != 0)
-                zobristKey ^= Zobrist.enPassantFile[newEnPassantFile];
+				rooks[colourToMoveIndex].MovePiece(castlingRookToIndex, castlingRookFromIndex);
+				zobristKey ^= Zobrist.pieces[Piece.Rook, colourToMoveIndex, castlingRookFromIndex];
+				zobristKey ^= Zobrist.pieces[Piece.Rook, colourToMoveIndex, castlingRookToIndex];
+			}
 
-            var newCastleState = currentGameState & 0b1111;
-            if (newCastleState != originalCastleState)
-            {
-                zobristKey ^= Zobrist.castlingRights[originalCastleState];
-                zobristKey ^= Zobrist.castlingRights[newCastleState];
-            }
+			gameStateHistory.Pop();
+			currentGameState = gameStateHistory.Peek();
 
-            plyCount--;
+			fiftyMoveCounter = (int) (currentGameState & 4294950912) >> 14;
+			var newEnPassantFile = (int)(currentGameState >> 4) & 15;
+			if (newEnPassantFile != 0)
+				zobristKey ^= Zobrist.enPassantFile[newEnPassantFile];
 
-            if (recordGameHistory && repetitionPosHistory.Count > 0)
-            {
-                repetitionPosHistory.Pop();
-            }
+			var newCastleState = currentGameState & 0b1111;
+			if (newCastleState != originalCastleState)
+			{
+				zobristKey ^= Zobrist.castlingRights[originalCastleState];
+				zobristKey ^= Zobrist.castlingRights[newCastleState];
+			}
+
+			plyCount--;
+
+			if (recordGameHistory && repetitionPosHistory.Count > 0)
+			{
+				repetitionPosHistory.Pop();
+			}
         }
 
         private void InitializeBoard()

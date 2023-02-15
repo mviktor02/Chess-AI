@@ -1,4 +1,7 @@
-﻿namespace Chess.Core
+﻿using System;
+using UnityEngine;
+
+namespace Chess.Core
 {
     /// <summary>
     /// List of pieces of given type and colour currently on the board

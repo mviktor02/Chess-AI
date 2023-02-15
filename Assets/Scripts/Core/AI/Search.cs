@@ -227,7 +227,16 @@ namespace Chess.Core.AI
             moveOrderer.OrderMoves(board, moves, false);
             foreach (var move in moves)
             {
-                board.MakeMove (move, false);
+                try
+                {
+                    board.MakeMove (move, false);
+                }
+                catch (IndexOutOfRangeException e)
+                {
+                    Debug.Log(move.StartSquare);
+                    Debug.Log(FenUtility.FenFromPosition(board));
+                    throw new Exception(e.Message);
+                }
                 eval = -QuiescenceSearch(-beta, -alpha);
                 board.UnmakeMove (move, false);
                 numQNodes++;
