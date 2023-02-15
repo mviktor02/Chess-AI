@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Chess.Core.AI
 {
@@ -17,6 +16,7 @@ namespace Chess.Core.AI
         public int searchTimeMillis = 1000;
         public bool endlessSearchMode;
         public bool clearTTEachMove;
+        public EvaluationType evaluationType;
 
         public bool useBook;
         public TextAsset book;
@@ -26,6 +26,11 @@ namespace Chess.Core.AI
 
         public void RequestAbortSearch () {
             requestAbortSearch?.Invoke ();
+        }
+
+        public enum EvaluationType
+        {
+            MATERIAL_ONLY
         }
     }
 }

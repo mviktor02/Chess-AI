@@ -1,4 +1,6 @@
-﻿namespace Chess.Core.AI
+﻿using System;
+
+namespace Chess.Core.AI
 {
     public class Evaluation
     {
@@ -9,9 +11,13 @@
         public const int rookValue = 500;
         public const int queenValue = 900;
 
-        public static int Evaluate(in Board board)
+        public static int Evaluate(in Board board, AISettings.EvaluationType evaluationType)
         {
-            return EvaluateMaterialOnly(board);
+            return evaluationType switch
+            {
+                AISettings.EvaluationType.MATERIAL_ONLY => EvaluateMaterialOnly(board),
+                _ => throw new ArgumentOutOfRangeException(nameof(evaluationType), evaluationType, null)
+            };
         }
 
         /// <summary>

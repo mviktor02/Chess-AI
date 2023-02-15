@@ -214,7 +214,7 @@ namespace Chess.Core.AI
             // A player isn't forced to make a capture (typically), so see what the evaluation is without capturing anything.
             // This prevents situations where a player ony has bad captures available from being evaluated as bad,
             // when the player might have good non-capture moves available.
-            int eval = Evaluation.Evaluate(board);
+            int eval = Evaluation.Evaluate(board, settings.evaluationType);
             searchDiagnostics.numPositionsEvaluated++;
             if (eval >= beta) {
                 return beta;
