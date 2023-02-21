@@ -30,7 +30,8 @@ namespace Chess.Core.AI
 
         public enum EvaluationType
         {
-            MATERIAL_ONLY
+            MATERIAL_ONLY,
+            PST_WITH_ENDGAME_WEIGHTS
         }
     }
 }

@@ -17,17 +17,17 @@ MonoBehaviour:
   useTranspositionTable: 1
   useThreading: 1
   useFixedDepthSearch: 0
-  searchTimeMillis: 1000
+  searchTimeMillis: 2000
   endlessSearchMode: 0
   clearTTEachMove: 0
-  evaluationType: 0
+  evaluationType: 1
   useBook: 0
   book: {fileID: 0}
   maxBookPly: 10
   diagnostics:
-    lastCompletedDepth: 7
-    moveVal: Ke6
-    move: e8-e7
-    eval: 2540
+    lastCompletedDepth: 19
+    moveVal: a4
+    move: a6-a5
+    eval: 379
     isBook: 0
-    numPositionsEvaluated: 588959
+    numPositionsEvaluated: 1586603
