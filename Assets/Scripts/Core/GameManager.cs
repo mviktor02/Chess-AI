@@ -21,8 +21,10 @@ namespace Chess.Core
         }
         
         private BoardUI boardUI;
-        private Board board { get; set; }
+        public Board board { get; private set; }
+        private Board searchBoard; // We need a separate board to perform searches on in order to not have any UI glitches. This is basically just a copy of the normal board.
         public AISettings aiSettings;
+        public PlayerSettings playerSettings;
 
         private Result gameResult;
         private Player whitePlayer;
@@ -35,11 +37,11 @@ namespace Chess.Core
         {
             boardUI = FindObjectOfType<BoardUI>();
             board = new Board();
+            searchBoard = new Board();
             moveHistory = new List<Move>();
             aiSettings.diagnostics = new Search.SearchDiagnostics();
             
-            // TODO expose these as settings
-            NewGame(PlayerType.Human, PlayerType.AI);
+            NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);
         }
 
         private void Update()
@@ -54,6 +56,7 @@ namespace Chess.Core
         {
             moveHistory.Clear();
             board.LoadStartPosition();
+            searchBoard.LoadStartPosition();
             boardUI.UpdatePositions(board);
             boardUI.ResetSquareColours();
 
@@ -131,6 +134,7 @@ namespace Chess.Core
         {
             var animateMove = playerToMove is ArtificialPlayer;
             board.MakeMove(move);
+            searchBoard.MakeMove(move);
 
             moveHistory.Add(move);
             boardUI.OnMoveMade(board, move, animateMove);
@@ -210,7 +214,7 @@ namespace Chess.Core
             if (playerType == PlayerType.Human) {
                 player = new HumanPlayer (board);
             } else {
-                player = new ArtificialPlayer(board, aiSettings);
+                player = new ArtificialPlayer(searchBoard, aiSettings);
             }
             player.onMoveEvent += OnMoveChosen;
         }

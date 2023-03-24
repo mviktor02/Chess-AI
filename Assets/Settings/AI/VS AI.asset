@@ -19,15 +19,15 @@ MonoBehaviour:
   useFixedDepthSearch: 0
   searchTimeMillis: 2000
   endlessSearchMode: 0
-  clearTTEachMove: 0
-  evaluationType: 1
-  useBook: 0
-  book: {fileID: 0}
+  clearTTEachMove: 1
+  evaluationType: 2
+  useBook: 1
+  book: {fileID: 4900000, guid: 611bcc5cd1d56814d8bec1a804eb25d8, type: 3}
   maxBookPly: 10
   diagnostics:
-    lastCompletedDepth: 19
-    moveVal: a4
-    move: a6-a5
-    eval: 379
+    lastCompletedDepth: 11
+    moveVal: Be7
+    move: g6-e8
+    eval: -377
     isBook: 0
-    numPositionsEvaluated: 1586603
+    numPositionsEvaluated: 969390

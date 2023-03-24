@@ -15,7 +15,7 @@ namespace Chess.Core
         Board board;
         CancellationTokenSource cancelSearchTimer;
 
-        //Book book;
+        Book book;
 
         public ArtificialPlayer(Board board, AISettings settings)
         {
@@ -25,6 +25,7 @@ namespace Chess.Core
 			search = new Search(ref board, settings);
 			search.onSearchComplete += OnSearchComplete;
 			search.searchDiagnostics = new Search.SearchDiagnostics ();
+			book = BookCreator.LoadBookFromFile(settings.book);
         }
 
         // Update running on Unity main thread. This is used to return the chosen move so as
@@ -44,27 +45,27 @@ namespace Chess.Core
 			search.searchDiagnostics.isBook = false;
 			moveFound = false;
 
-			/*Move bookMove = Move.InvalidMove;
+			Move bookMove = Move.InvalidMove;
 			if (settings.useBook && board.plyCount <= settings.maxBookPly) {
-				if (book.HasPosition (board.ZobristKey)) {
-					bookMove = book.GetRandomBookMoveWeighted (board.ZobristKey);
+				if (book.HasPosition (board.zobristKey)) {
+					bookMove = book.GetRandomBookMoveWeighted (board.zobristKey);
 				}
 			}
 
-			if (bookMove.IsInvalid) {*/
+			if (bookMove.IsInvalid) {
 				if (settings.useThreading) {
 					StartThreadedSearch ();
 				} else {
 					StartSearch ();
 				}
-			/*} else {
+			} else {
 			
 				search.searchDiagnostics.isBook = true;
-				search.searchDiagnostics.moveVal = PGN.NotationFromMove (FenUtility.FenFromPosition(board), bookMove);
+				search.searchDiagnostics.moveVal = PGN.NotationFromMove(FenUtility.FenFromPosition(board), bookMove);
 				settings.diagnostics = search.searchDiagnostics;
 				Task.Delay (bookMoveDelayMillis).ContinueWith ((t) => PlayBookMove (bookMove));
 				
-			}*/
+			}
 		}
 
 		void StartSearch() {

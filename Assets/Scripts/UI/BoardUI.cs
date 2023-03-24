@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
 using Chess.Core;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Chess.UI
 {
@@ -74,7 +72,7 @@ namespace Chess.UI
             ResetSquareColours();
         }
 
-        public void ResetSquareColours()
+        public void ResetSquareColours(bool highlight = true)
         {
             for (var rank = 0; rank < 8; rank++)
             {
@@ -85,7 +83,7 @@ namespace Chess.UI
                 }
             }
             
-            if (!lastMadeMove.IsInvalid)
+            if (highlight && !lastMadeMove.IsInvalid)
                 HighlightMove(lastMadeMove);
         }
 
@@ -202,6 +200,17 @@ namespace Chess.UI
             
             if (!lastMadeMove.IsInvalid)
                 HighlightMove(lastMadeMove);
+        }
+        
+        public bool TryGetSquareUnderMouse(Vector2 mouseWorld, out Coord selectedCoord) {
+            int file = (int) (mouseWorld.x + 4);
+            int rank = (int) (mouseWorld.y + 4);
+            if (!whiteIsBottom) {
+                file = 7 - file;
+                rank = 7 - rank;
+            }
+            selectedCoord = new Coord (file, rank);
+            return (file is >= 0 and < 8) && (rank is >= 0 and < 8);
         }
     }
 }

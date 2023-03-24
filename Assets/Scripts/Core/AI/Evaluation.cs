@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Chess.Core.AI
 {
@@ -10,15 +11,17 @@ namespace Chess.Core.AI
         public const int bishopValue = 320;
         public const int rookValue = 500;
         public const int queenValue = 900;
+        public const int kingValue = 1000;
         
         const float endgameMaterialStart = rookValue * 2 + bishopValue + knightValue;
 
-        public static int Evaluate(in Board board, AISettings.EvaluationType evaluationType)
+        public static int Evaluate(in Board board, AISettings.EvaluationType evaluationType, List<Move> moves = null)
         {
             return evaluationType switch
             {
 	            AISettings.EvaluationType.MATERIAL_ONLY => EvaluateMaterialOnly(board),
 	            AISettings.EvaluationType.PST_WITH_ENDGAME_WEIGHTS => EvaluateWithPSTandEndgameWeight(board),
+	            AISettings.EvaluationType.MOBILITY_AND_THREATS => EvaluateWithMobilityAndThreats(board, moves),
                 _ => throw new ArgumentOutOfRangeException(nameof(evaluationType), evaluationType, null)
             };
         }
@@ -120,6 +123,82 @@ namespace Chess.Core.AI
 				value += PieceSquareTable.Read(table, pieceList[i], isWhite);
 			}
 			return value;
+		}
+
+		private static int EvaluateWithMobilityAndThreats(in Board board, in List<Move> moves)
+		{
+			int whiteEval = 0;
+			int blackEval = 0;
+
+			int whiteMaterial = CalculateMaterial(board, Board.WhiteIndex);
+			int blackMaterial = CalculateMaterial(board, Board.BlackIndex);
+
+			int whiteMaterialWithoutPawns = whiteMaterial - board.pawns[Board.WhiteIndex].Count * pawnValue;
+			int blackMaterialWithoutPawns = blackMaterial - board.pawns[Board.BlackIndex].Count * pawnValue;
+			float whiteEndgamePhaseWeight = EndgamePhaseWeight(whiteMaterialWithoutPawns);
+			float blackEndgamePhaseWeight = EndgamePhaseWeight(blackMaterialWithoutPawns);
+
+			whiteEval += whiteMaterial;
+			blackEval += blackMaterial;
+			whiteEval += MopUpEval(board, Board.WhiteIndex, Board.BlackIndex, whiteMaterial, blackMaterial, blackEndgamePhaseWeight);
+			blackEval += MopUpEval(board, Board.BlackIndex, Board.WhiteIndex, blackMaterial, whiteMaterial, whiteEndgamePhaseWeight);
+
+			whiteEval += EvaluatePieceSquareTables(board, Board.WhiteIndex, blackEndgamePhaseWeight);
+			blackEval += EvaluatePieceSquareTables(board, Board.BlackIndex, whiteEndgamePhaseWeight);
+
+			whiteEval += (int) (CalculateMobility(board, moves, Board.WhiteIndex) * (1 - whiteEndgamePhaseWeight));
+			blackEval += (int) (CalculateMobility(board, moves, Board.BlackIndex) * (1 - blackEndgamePhaseWeight));
+
+			whiteEval += (int) (CalculateThreats(board, moves, Board.WhiteIndex) * (1 - whiteEndgamePhaseWeight));
+			blackEval += (int) (CalculateThreats(board, moves, Board.BlackIndex) * (1 - blackEndgamePhaseWeight));
+
+			int eval = whiteEval - blackEval;
+			return board.isWhitesTurn ? eval : -eval;
+		}
+
+		private static int CalculateMobility(in Board board, in List<Move> moves, int colourIndex)
+		{
+			int mobility = 0;
+			foreach (var move in moves)
+			{
+				int piece = board.squares[move.StartSquare];
+				if (Piece.GetColour(piece) == colourIndex)
+				{
+					mobility += (int) (GetPieceValue(piece) * 0.5f);
+				}
+			}
+
+			return mobility;
+		}
+
+		// Try to threaten opponent's high value pieces
+		private static int CalculateThreats(in Board board, in List<Move> moves, int colourIndex)
+		{
+			int threats = 0;
+			foreach (var move in moves)
+			{
+				int movingPiece = board.squares[move.StartSquare];
+				int targetPiece = board.squares[move.TargetSquare];
+				if (Piece.GetColour(movingPiece) == colourIndex && Piece.GetColour(targetPiece) != colourIndex)
+				{
+					threats += (int) (GetPieceValue(targetPiece) * 0.5f);
+				}
+			}
+
+			return threats;
+		}
+		
+		private static int GetPieceValue(int pieceType)
+		{
+			return pieceType switch
+			{
+				Piece.Queen => queenValue,
+				Piece.Rook => rookValue,
+				Piece.Bishop => bishopValue,
+				Piece.Knight => knightValue,
+				Piece.Pawn => pawnValue,
+				_ => 0
+			};
 		}
         
     }

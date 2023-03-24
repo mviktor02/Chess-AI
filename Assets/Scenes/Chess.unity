@@ -153,6 +153,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aiSettings: {fileID: 11400000, guid: d8bbe57d0b146084998442e0d3b4445e, type: 2}
+  playerSettings:
+    whitePlayer: 1
+    blackPlayer: 1
 --- !u!4 &747273820
 Transform:
   m_ObjectHideFlags: 0

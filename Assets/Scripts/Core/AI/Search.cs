@@ -217,10 +217,14 @@ namespace Chess.Core.AI
         
         // Search capture moves until a 'quiet' position is reached.
         int QuiescenceSearch(int alpha, int beta) {
+            // Generate moves first so we can pass it to the evaluation function - needed for advanced eval
+            var moves = moveGenerator.GenerateMoves (board, false);
+            moveOrderer.OrderMoves(board, moves, false);
+            
             // A player isn't forced to make a capture (typically), so see what the evaluation is without capturing anything.
             // This prevents situations where a player ony has bad captures available from being evaluated as bad,
             // when the player might have good non-capture moves available.
-            int eval = Evaluation.Evaluate(board, settings.evaluationType);
+            int eval = Evaluation.Evaluate(board, settings.evaluationType, moves);
             searchDiagnostics.numPositionsEvaluated++;
             if (eval >= beta) {
                 return beta;
@@ -229,8 +233,6 @@ namespace Chess.Core.AI
                 alpha = eval;
             }
 
-            var moves = moveGenerator.GenerateMoves (board, false);
-            moveOrderer.OrderMoves(board, moves, false);
             foreach (var move in moves)
             {
                 try
