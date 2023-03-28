@@ -152,6 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98b3e598358546e98969f9a3fea95a03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  exportLocation: E:/Chess-AI-Exports
+  numOfGamesToPlay: 3
   aiSettings: {fileID: 11400000, guid: d8bbe57d0b146084998442e0d3b4445e, type: 2}
   playerSettings:
     whitePlayer: 1

@@ -64,7 +64,7 @@
 								break; // ambiguity resolved
 							}
 							if (fromRankIndex != alternateFromRankIndex) {
-								moveNotation += fromRankIndex;
+								moveNotation += (fromRankIndex + 1);
 								break; // ambiguity resolved
 							}
 						}
@@ -85,7 +85,7 @@
 			}
 
 			moveNotation += BoardRepresentation.FileNames[BoardRepresentation.FileIndex(move.TargetSquare)];
-			moveNotation += BoardRepresentation.RankIndex(move.TargetSquare);
+			moveNotation += (BoardRepresentation.RankIndex(move.TargetSquare) + 1);
 
 			// add promotion piece
 			if (move.IsPromotion) {

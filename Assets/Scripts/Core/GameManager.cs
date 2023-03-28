@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Chess.Core.AI;
+using Chess.Core.Util;
 using Chess.UI;
 using UnityEngine;
 
@@ -9,6 +11,10 @@ namespace Chess.Core
 {
     public class GameManager : MonoBehaviour
     {
+        public string exportLocation;
+        public int numOfGamesToPlay;
+        private int currentGameNum;
+        
         private enum Result
         {
             Playing,
@@ -153,7 +159,21 @@ namespace Chess.Core
 
             } else {
                 Debug.Log ("Game Over");
+                
+                ExportToPGN($"{currentGameNum+1}");
+                if (currentGameNum < numOfGamesToPlay)
+                {
+                    currentGameNum++;
+                    NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);
+                }
             }
+        }
+
+        private void ExportToPGN(string filename = "exported game")
+        {
+            string pgn = PGNCreator.CreatePGN(moveHistory.ToArray());
+            using var writer = new StreamWriter(exportLocation + '/' + filename + ".pgn");
+            writer.Write(pgn);
         }
 
         private void PrintGameResult(Result result)
@@ -191,7 +211,7 @@ namespace Chess.Core
             Debug.Log(text);
         }
         
-        public void ExportGame () {
+        public void ExportToPGNAndOpenLichess() {
             string pgn = PGN.CreatePGN (moveHistory.ToArray ());
             string baseUrl = "https://www.lichess.org/paste?pgn=";
             string escapedPGN = UnityEngine.Networking.UnityWebRequest.EscapeURL (pgn);
