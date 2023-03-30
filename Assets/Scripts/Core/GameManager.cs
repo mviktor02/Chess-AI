@@ -161,7 +161,7 @@ namespace Chess.Core
                 Debug.Log ("Game Over");
                 
                 ExportToPGN($"{currentGameNum+1}");
-                if (currentGameNum < numOfGamesToPlay)
+                if (currentGameNum < numOfGamesToPlay - 1)
                 {
                     currentGameNum++;
                     NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);

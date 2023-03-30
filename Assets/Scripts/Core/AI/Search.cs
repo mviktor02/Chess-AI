@@ -136,8 +136,12 @@ namespace Chess.Core.AI
             if (plyFromRoot > 0)
             {
                 // If the same position is repeated 3 times, the game is automatically a draw, so return the draw score
-                if (board.repetitionPosHistory.Count(x => x == board.zobristKey) == 3)
+                // We're returning at a count of 2 since 3 produced draws too often
+                int repetitionCount = board.repetitionPosHistory.Count(x => x == board.zobristKey);
+                if (repetitionCount == 2)
+                {
                     return 0;
+                }
 
                 // Skip this position if a mating sequence has already been found earlier in the search, which would be
                 // shorter than any mate we could find from here. This means that alpha can't be worse (therefore beta
