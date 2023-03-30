@@ -22,6 +22,8 @@ namespace Chess.Core.AI
         public TextAsset book;
         public int maxBookPly = 10;
 
+        public string syzygyPath;
+
         public Search.SearchDiagnostics diagnostics;
 
         public void RequestAbortSearch () {

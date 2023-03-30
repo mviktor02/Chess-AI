@@ -38,6 +38,8 @@ namespace Chess.Core
 
         public void MovePiece(int startSquare, int targetSquare)
         {
+            if (occupiedSquares.Length == 0) return;
+            
             var pieceIndex = map[startSquare];
             occupiedSquares[pieceIndex] = targetSquare;
             map[targetSquare] = pieceIndex;

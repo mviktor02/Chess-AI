@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Chess.Core
 {
-    // TODO UnmakeMove
     public class Board
     {
         public const int WhiteIndex = 0;

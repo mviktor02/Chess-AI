@@ -207,7 +207,9 @@ namespace Chess.Core
                 default:
                     throw new ArgumentOutOfRangeException(nameof(result), result, null);
             }
-            // TODO show message on screen
+
+            if (string.IsNullOrWhiteSpace(text)) return;
+            
             Debug.Log(text);
         }
         

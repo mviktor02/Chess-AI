@@ -1,6 +1,9 @@
-﻿using System.Threading;
+﻿using System;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Chess.Core.AI;
+using UnityEngine;
 
 namespace Chess.Core
 {
@@ -11,11 +14,19 @@ namespace Chess.Core
         Search search;
         AISettings settings;
         bool moveFound;
+        bool useSyzygy;
         Move move;
         Board board;
         CancellationTokenSource cancelSearchTimer;
 
         Book book;
+        
+        [DllImport("Fathom", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool SetPath(string path);
+        
+        [DllImport("Fathom", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.BStr)]
+        private static extern string SyzygyLookup(string fen);
 
         public ArtificialPlayer(Board board, AISettings settings)
         {
@@ -26,6 +37,11 @@ namespace Chess.Core
 			search.onSearchComplete += OnSearchComplete;
 			search.searchDiagnostics = new Search.SearchDiagnostics ();
 			book = BookCreator.LoadBookFromFile(settings.book);
+
+			if (settings.syzygyPath.Length > 0)
+			{
+				useSyzygy = SetPath(settings.syzygyPath);
+			}
         }
 
         // Update running on Unity main thread. This is used to return the chosen move so as
@@ -53,6 +69,19 @@ namespace Chess.Core
 			}
 
 			if (bookMove.IsInvalid) {
+				if (useSyzygy)
+				{
+					string fen = FenUtility.FenFromPosition(board);
+					string fathomMove = SyzygyLookup(fen);
+					if (!fathomMove.StartsWith("error"))
+					{
+						var move = MoveFromFathom(board, fathomMove);
+						search.searchDiagnostics.moveVal = PGN.NotationFromMove(fen, move);
+						settings.diagnostics = search.searchDiagnostics;
+						Task.Delay (bookMoveDelayMillis).ContinueWith ((t) => PlayBookMove (move));
+						return;
+					}
+				}
 				if (settings.useThreading) {
 					StartThreadedSearch ();
 				} else {
@@ -66,6 +95,49 @@ namespace Chess.Core
 				Task.Delay (bookMoveDelayMillis).ContinueWith ((t) => PlayBookMove (bookMove));
 				
 			}
+		}
+		
+		public static Move MoveFromFathom(in Board board, string fathomMove)
+		{
+			int flag = Move.Flag.None;
+			string[] move = fathomMove.Split(' ');
+			int from = int.Parse(move[0]);
+			int to = int.Parse(move[1]);
+			int fathomFlag = int.Parse(move[2]);
+
+			if (fathomFlag != 0)
+			{
+				flag = fathomFlag switch
+				{
+					1 => Move.Flag.PromoteToQueen,
+					2 => Move.Flag.PromoteToRook,
+					3 => Move.Flag.PromoteToBishop,
+					4 => Move.Flag.PromoteToKnight,
+					_ => Move.Flag.None
+				};
+			}
+			else if (Piece.GetPieceType(board.squares[from]) == Piece.Pawn)
+			{
+				if (Math.Abs(to - from) == 16)
+				{
+					flag = Move.Flag.PawnTwoForward;
+				}
+				else
+				{
+					int enPassantFile = ((int)(board.currentGameState >> 4) & 15) - 1;
+					int enPassantSquare = -1;
+					if (enPassantFile != -1)
+					{
+						enPassantSquare = 8 * (board.isWhitesTurn ? 5 : 2) + enPassantFile;
+						if (to == enPassantSquare)
+						{
+							flag = Move.Flag.EnPassant;
+						}
+					}
+				}
+			}
+			
+			return new Move(from, to, flag);
 		}
 
 		void StartSearch() {

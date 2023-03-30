@@ -47,7 +47,7 @@ namespace Chess.Core.AI
         private int numTranspositions;
         public SearchDiagnostics searchDiagnostics;
         private System.Diagnostics.Stopwatch searchStopwatch;
-
+        
         public Search(ref Board searchBoard, AISettings aiSettings, int maxSearchDepth = 8)
         {
             board = searchBoard;
