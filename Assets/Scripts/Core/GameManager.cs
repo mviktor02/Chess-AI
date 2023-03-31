@@ -14,6 +14,7 @@ namespace Chess.Core
         public string exportLocation;
         public int numOfGamesToPlay;
         private int currentGameNum;
+        private Result[] results;
         
         private enum Result
         {
@@ -46,6 +47,8 @@ namespace Chess.Core
             searchBoard = new Board();
             moveHistory = new List<Move>();
             aiSettings.diagnostics = new Search.SearchDiagnostics();
+
+            results = new Result[numOfGamesToPlay];
             
             NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);
         }
@@ -158,13 +161,16 @@ namespace Chess.Core
                 playerToMove.NotifyTurnToMove ();
 
             } else {
-                Debug.Log ("Game Over");
-                
-                ExportToPGN($"{currentGameNum+1}");
+                ExportToPGN($"{currentGameNum+1} - {Enum.GetName(typeof(Result), gameResult)}");
                 if (currentGameNum < numOfGamesToPlay - 1)
                 {
+                    results[currentGameNum] = gameResult;
                     currentGameNum++;
                     NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);
+                }
+                else
+                {
+                    ExportResults();
                 }
             }
         }
@@ -174,6 +180,17 @@ namespace Chess.Core
             string pgn = PGNCreator.CreatePGN(moveHistory.ToArray());
             using var writer = new StreamWriter(exportLocation + '/' + filename + ".pgn");
             writer.Write(pgn);
+        }
+
+        private void ExportResults()
+        {
+            using var writer = new StreamWriter(exportLocation + "results.txt");
+            writer.WriteLine($"WhiteIsMated: {results.Count(x => x == Result.WhiteIsMated)}");
+            writer.WriteLine($"BlackIsMated: {results.Count(x => x == Result.BlackIsMated)}");
+            writer.WriteLine($"Stalemate: {results.Count(x => x == Result.Stalemate)}");
+            writer.WriteLine($"Repetition: {results.Count(x => x == Result.Repetition)}");
+            writer.WriteLine($"FiftyMoveRule: {results.Count(x => x == Result.FiftyMoveRule)}");
+            writer.WriteLine($"InsufficientMaterial: {results.Count(x => x == Result.InsufficientMaterial)}");
         }
 
         private void PrintGameResult(Result result)
