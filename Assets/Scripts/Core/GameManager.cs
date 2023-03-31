@@ -184,7 +184,7 @@ namespace Chess.Core
 
         private void ExportResults()
         {
-            using var writer = new StreamWriter(exportLocation + "results.txt");
+            using var writer = new StreamWriter(exportLocation + "/results.txt");
             writer.WriteLine($"WhiteIsMated: {results.Count(x => x == Result.WhiteIsMated)}");
             writer.WriteLine($"BlackIsMated: {results.Count(x => x == Result.BlackIsMated)}");
             writer.WriteLine($"Stalemate: {results.Count(x => x == Result.Stalemate)}");
