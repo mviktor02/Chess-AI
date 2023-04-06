@@ -49,6 +49,11 @@ namespace Chess.Core
             if (playerSettings.blackAiSettings) playerSettings.blackAiSettings.diagnostics = new Search.SearchDiagnostics();
 
             results = new Result[numOfGamesToPlay];
+
+            if (!string.IsNullOrWhiteSpace(exportLocation))
+            {
+                EnsureDirExists(exportLocation + '/');
+            }
             
             NewGame(playerSettings.whitePlayer, playerSettings.blackPlayer);
         }
@@ -162,6 +167,7 @@ namespace Chess.Core
 
             } else {
                 ExportToPGN($"{currentGameNum+1} - {Enum.GetName(typeof(Result), gameResult)}");
+                ExportDiagnostics();
                 if (currentGameNum < numOfGamesToPlay - 1)
                 {
                     results[currentGameNum] = gameResult;
@@ -172,6 +178,15 @@ namespace Chess.Core
                 {
                     ExportResults();
                 }
+            }
+        }
+
+        private void EnsureDirExists(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            if (!fileInfo.Directory.Exists)
+            {
+                Directory.CreateDirectory(fileInfo.DirectoryName);
             }
         }
 
@@ -191,6 +206,27 @@ namespace Chess.Core
             writer.WriteLine($"Repetition: {results.Count(x => x == Result.Repetition)}");
             writer.WriteLine($"FiftyMoveRule: {results.Count(x => x == Result.FiftyMoveRule)}");
             writer.WriteLine($"InsufficientMaterial: {results.Count(x => x == Result.InsufficientMaterial)}");
+        }
+
+        private void ExportDiagnostics()
+        {
+            if (playerSettings.whitePlayer == PlayerType.AI)
+                ExportDiagnostics("white", ((ArtificialPlayer)whitePlayer).diagnosticsExport);
+            if (playerSettings.blackPlayer == PlayerType.AI)
+                ExportDiagnostics("black", ((ArtificialPlayer)blackPlayer).diagnosticsExport);
+        }
+
+        private void ExportDiagnostics(string player, List<ArtificialPlayer.DiagnosticsExport> diagnostics)
+        {
+            EnsureDirExists(exportLocation + $"/diagnostics/{player}/");
+            using var writer = new StreamWriter(exportLocation + $"/diagnostics/{player}/{currentGameNum+1}.txt");
+            writer.WriteLine($"Avg Search Depth: {diagnostics.Average(x => x.Depth)}");
+            writer.WriteLine($"Avg Num of Positions Evaluated: {diagnostics.Average(x => x.NumPosEvaluated)}");
+            writer.WriteLine();
+            foreach (var stats in diagnostics)
+            {
+                writer.WriteLine($"{stats.Depth}: {stats.NumPosEvaluated}");
+            }
         }
 
         private void PrintGameResult(Result result)

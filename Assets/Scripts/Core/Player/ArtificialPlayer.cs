@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +21,9 @@ namespace Chess.Core
         CancellationTokenSource cancelSearchTimer;
 
         Book book;
-        
+
+        public List<DiagnosticsExport> diagnosticsExport;
+
         [DllImport("Fathom", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern bool SetPath(string path);
         
@@ -32,6 +35,7 @@ namespace Chess.Core
         {
 			this.settings = settings;
 			this.board = board;
+			diagnosticsExport = new List<DiagnosticsExport>();
 			settings.requestAbortSearch += TimeOutThreadedSearch;
 			search = new Search(ref board, settings);
 			search.onSearchComplete += OnSearchComplete;
@@ -174,6 +178,19 @@ namespace Chess.Core
 			cancelSearchTimer?.Cancel();
 			moveFound = true;
 			this.move = move;
+			diagnosticsExport.Add(new DiagnosticsExport(search.searchDiagnostics.numPositionsEvaluated, search.searchDiagnostics.lastCompletedDepth));
+		}
+
+		public struct DiagnosticsExport
+		{
+			public int NumPosEvaluated { get; }
+			public int Depth { get; }
+
+			public DiagnosticsExport(int numPosEvaluated, int depth)
+			{
+				NumPosEvaluated = numPosEvaluated;
+				Depth = depth;
+			}
 		}
     }
 }
