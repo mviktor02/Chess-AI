@@ -70,7 +70,7 @@ namespace Chess.Core
             boardUI.ResetSquareColours();
 
             CreatePlayer(ref whitePlayer, whitePlayerType);
-            CreatePlayer(ref blackPlayer, blackPlayerType);
+            CreatePlayer(ref blackPlayer, blackPlayerType, false);
 
             gameResult = Result.Playing;
             PrintGameResult(gameResult);
