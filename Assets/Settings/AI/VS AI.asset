@@ -15,20 +15,21 @@ MonoBehaviour:
   depth: 5
   useIterativeDeepening: 1
   useTranspositionTable: 1
+  useAspirationWindows: 1
   useThreading: 1
   useFixedDepthSearch: 0
   searchTimeMillis: 2000
   endlessSearchMode: 0
   clearTTEachMove: 1
-  evaluationType: 2
+  evaluationType: 1
   useBook: 1
   book: {fileID: 4900000, guid: 611bcc5cd1d56814d8bec1a804eb25d8, type: 3}
   maxBookPly: 10
   syzygyPath: C:\syzygy-tablebases
   diagnostics:
-    lastCompletedDepth: 0
-    moveVal: 
-    move: 
+    lastCompletedDepth: 9
+    moveVal: Rf7+
+    move: f7-f8
     eval: 0
     isBook: 0
-    numPositionsEvaluated: 0
+    numPositionsEvaluated: 790985

@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   exportLocation: E:/Chess-AI-Exports
-  numOfGamesToPlay: 10
+  numOfGamesToPlay: 25
   aiSettings: {fileID: 11400000, guid: d8bbe57d0b146084998442e0d3b4445e, type: 2}
   playerSettings:
     whitePlayer: 1

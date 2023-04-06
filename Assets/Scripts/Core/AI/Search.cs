@@ -95,9 +95,12 @@ namespace Chess.Core.AI
                     currentSearchDepth = searchDepth;
                     bestMove = bestMoveThisIteration;
                     bestEval = bestEvalThisIteration;
-                    
-                    alpha = bestEvalThisIteration - (bestEvalThisIteration < alpha ? 4 : 1) * fourthPawnValue;
-                    beta = bestEvalThisIteration + (bestEvalThisIteration > beta ? 4 : 1) * fourthPawnValue;
+
+                    if (settings.useAspirationWindows)
+                    {
+                        alpha = bestEvalThisIteration - (bestEvalThisIteration < alpha ? 4 : 1) * fourthPawnValue;
+                        beta = bestEvalThisIteration + (bestEvalThisIteration > beta ? 4 : 1) * fourthPawnValue;
+                    }
 
                     // Update diagnostics
                     searchDiagnostics.lastCompletedDepth = searchDepth;

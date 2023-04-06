@@ -10,6 +10,7 @@ namespace Chess.Core.AI
         public int depth;
         public bool useIterativeDeepening;
         public bool useTranspositionTable;
+        public bool useAspirationWindows;
 
         public bool useThreading;
         public bool useFixedDepthSearch;
