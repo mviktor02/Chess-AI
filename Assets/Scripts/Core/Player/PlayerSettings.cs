@@ -1,5 +1,5 @@
 ﻿using System;
-using UnityEngine;
+using Chess.Core.AI;
 
 namespace Chess.Core
 {
@@ -7,6 +7,8 @@ namespace Chess.Core
     public class PlayerSettings
     {
         public GameManager.PlayerType whitePlayer;
+        public AISettings whiteAiSettings;
         public GameManager.PlayerType blackPlayer;
+        public AISettings blackAiSettings;
     }
 }
