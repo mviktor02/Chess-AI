@@ -1,3 +1,6 @@
-# Chess-AI
+# Chess and Artificial Intelligence
 
-Szakdoga - sakk AI
+A simple chess program built as my thesis project, implemented in C# using the Unity game engine.
+
+This project is heavily based on [Sebastian Lague's Chess-AI](https://github.com/SebLague/Chess-AI).
+It also includes Fathom, a Syzygy tablebase probing tool, as a DLL built from [here](https://github.com/mviktor02/Fathom).
