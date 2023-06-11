@@ -4,15 +4,6 @@ using UnityEngine;
 
 namespace Chess.Core.AI
 {
-    /*
-     * TODO
-     * Move Orderer
-     * AI Player
-     * Iterative Deepening
-     * Quiescence Search
-     * Transposition Table
-     * Debug Info
-     */
     /// <summary>
     /// The Search class allows us to look for the next best move from the current board position.
     /// We use a min-max search with alpha-beta pruning and null move heuristic, with added on settings like
